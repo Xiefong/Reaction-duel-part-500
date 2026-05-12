@@ -353,52 +353,5 @@ fetch('api.php?action=get_dashboard')
     })
     .catch(err => console.error("Error fetching dashboard:", err));
 </script>
-let sessions = [];
-
-// AMBIL DATA DARI DATABASE RAILWAY (CLOUD)
-fetch('api.php?action=get_dashboard')
-    .then(res => res.json())
-    .then(data => {
-        if(data.success) {
-            // Ubah format database ke format yang dimengerti oleh grafik chart.js kamu
-            sessions = data.history.map(h => ({
-                id: 'S' + h.id,
-                timestamp: h.created_at,
-                players: [{ 
-                    username: h.username, 
-                    score: h.score, 
-                    avgTime: h.avg_time, 
-                    bestTime: h.best_time, 
-                    xp: h.xp_earned 
-                }],
-                roundLog: [1,2,3,4,5] // Simulasi data ronde agar grafik tidak error
-            }));
-            
-            // Render semua grafik
-            renderSummary();
-            renderInsight();
-            renderHistory();
-            buildTrendChart();
-            buildDistChart();
-            buildConsistencyChart();
-            
-            // Render Leaderboard dari tabel users MySQL
-            const tbody = document.getElementById('leaderboard-body');
-            tbody.innerHTML = data.leaderboard.map((r, i) => {
-                const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : '';
-                return `<tr class="${rankClass}">
-                    <td>${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}</td>
-                    <td>${r.username}</td>
-                    <td style="font-weight:800;color:var(--teal)">${r.score} XP</td>
-                    <td>${r.bestTime ? r.bestTime + ' ms' : '---'}</td>
-                    <td style="color:var(--green)">-</td>
-                    <td>-</td>
-                    <td><span class="badge badge-good">PRO</span></td>
-                </tr>`;
-            }).join('');
-        }
-    });
-
-// PENTING: Hapus tulisan renderSummary(); renderInsight(); dll yang tadinya ada di luar fetch!
 </body>
 </html>
