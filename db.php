@@ -3,10 +3,10 @@ function getDB() {
     static $pdo = null;
     if ($pdo !== null) return $pdo;
     
-    // DATA DARI RAILWAY KAMU (Sudah saya masukkan langsung)
-    $host = "mainline.proxy.rlwy.net"; 
-    $port = "46463"; 
-    $pass = "NCYdsxbJvSbepwCdcUnwUYkHnmdRcQmV"; 
+    // INI DATA TERBARU KAMU YANG BENAR!
+    $host = "junction.proxy.rlwy.net"; 
+    $port = "58807"; 
+    $pass = "rOeyWdCqgYjMhWePzLgUjKkSbdYfWdZz"; 
     $db   = "railway"; 
     $user = "root";    
 
@@ -59,7 +59,7 @@ function getDB() {
         return $pdo;
 
     } catch (\PDOException $e) {
-        echo json_encode(["success" => false, "message" => "Koneksi Gagal: " . $e->getMessage()]);
+        echo json_encode(["success" => false, "message" => "DB Error Detail: " . $e->getMessage()]);
         exit;
     }
 }
