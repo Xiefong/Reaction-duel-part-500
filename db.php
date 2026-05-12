@@ -3,21 +3,27 @@ function getDB() {
     static $pdo = null;
     if ($pdo !== null) return $pdo;
     
-    $host = getenv('MYSQLHOST');
-    $port = getenv('MYSQLPORT'); 
-    $db   = getenv('MYSQLDATABASE');
-    $user = getenv('MYSQLUSER');
-    $pass = getenv('MYSQLPASSWORD');
+    // Cek semua variasi nama variabel Railway agar tidak ada yang terlewat
+    $host = getenv('MYSQLHOST') ?: getenv('MYSQL_HOST');
+    $port = getenv('MYSQLPORT') ?: getenv('MYSQL_PORT'); 
+    $db   = getenv('MYSQLDATABASE') ?: getenv('MYSQL_DATABASE') ?: 'railway';
+    $user = getenv('MYSQLUSER') ?: getenv('MYSQL_USER');
+    $pass = getenv('MYSQLPASSWORD') ?: getenv('MYSQL_PASSWORD');
 
     try {
-        $pdo = new PDO("mysql:host={$host};port={$port};dbname={$db};charset=utf8mb4", $user, $pass, [
+        // 1. Konek ke MySQL secara umum (TANPA menyebutkan nama database dulu)
+        $pdoTemp = new PDO("mysql:host={$host};port={$port};charset=utf8mb4", $user, $pass, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES => false,
         ]);
 
-        // INI YANG AKAN MEMBUAT TABEL SECARA OTOMATIS:
-        $pdo->exec("CREATE TABLE IF NOT EXISTS users (
+        // 2. Paksa pembuatan database jika ternyata Railway belum membuatnya
+        $pdoTemp->exec("CREATE DATABASE IF NOT EXISTS `$db`");
+        $pdoTemp->exec("USE `$db`"); // Masuk ke database tersebut
+
+        // 3. Otomatis buat tabel-tabelnya
+        $pdoTemp->exec("CREATE TABLE IF NOT EXISTS users (
             username VARCHAR(50) PRIMARY KEY,
             password VARCHAR(100),
             email VARCHAR(100),
@@ -27,7 +33,7 @@ function getDB() {
             icon VARCHAR(50) DEFAULT 'fa-user'
         )");
 
-        $pdo->exec("CREATE TABLE IF NOT EXISTS history (
+        $pdoTemp->exec("CREATE TABLE IF NOT EXISTS history (
             id INT AUTO_INCREMENT PRIMARY KEY,
             username VARCHAR(50),
             score INT,
@@ -38,7 +44,7 @@ function getDB() {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )");
 
-        $pdo->exec("CREATE TABLE IF NOT EXISTS rooms (
+        $pdoTemp->exec("CREATE TABLE IF NOT EXISTS rooms (
             room_id INT AUTO_INCREMENT PRIMARY KEY,
             player1 VARCHAR(50) NOT NULL,
             player2 VARCHAR(50) DEFAULT NULL,
@@ -48,7 +54,9 @@ function getDB() {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )");
 
+        $pdo = $pdoTemp;
         return $pdo;
+
     } catch (\PDOException $e) {
         echo json_encode(["success" => false, "message" => "DB Error: " . $e->getMessage()]);
         exit;
