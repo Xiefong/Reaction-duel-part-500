@@ -1,25 +1,22 @@
 <?php
+// Fungsi pembantu agar PHP memaksa mengambil variabel dari Railway
+function getRailwayVar($key) {
+    if (getenv($key)) return getenv($key);
+    if (isset($_SERVER[$key])) return $_SERVER[$key];
+    if (isset($_ENV[$key])) return $_ENV[$key];
+    return '';
+}
+
 function getDB() {
     static $pdo = null;
     if ($pdo !== null) return $pdo;
     
-    // SAPU JAGAT: Cek semua kemungkinan penulisan nama variabel dari Railway
-    $host = getenv('MYSQLHOST') ?: getenv('MYSQL_HOST');
-    $port = getenv('MYSQLPORT') ?: getenv('MYSQL_PORT') ?: '3306'; 
-    $db   = getenv('MYSQL_DATABASE') ?: getenv('MYSQLDATABASE') ?: 'railway';
-    $user = getenv('MYSQLUSER') ?: getenv('MYSQL_USER') ?: 'root';
-    $pass = getenv('MYSQLPASSWORD') ?: getenv('MYSQL_ROOT_PASSWORD');
-
-    // Jika user menambahkan MYSQL_URL, kita prioritaskan ini karena 100% akurat
-    $url = getenv('MYSQL_URL') ?: getenv('DATABASE_URL');
-    if ($url) {
-        $parsed = parse_url($url);
-        $host = $parsed['host'] ?? $host;
-        $port = $parsed['port'] ?? $port;
-        $db   = ltrim($parsed['path'], '/') ?: $db;
-        $user = $parsed['user'] ?? $user;
-        $pass = $parsed['pass'] ?? $pass;
-    }
+    // Ambil data langsung sesuai nama variabel di foto Railway kamu
+    $host = getRailwayVar('MYSQLHOST');
+    $port = getRailwayVar('MYSQLPORT'); 
+    $db   = getRailwayVar('MYSQLDATABASE');
+    $user = getRailwayVar('MYSQLUSER');
+    $pass = getRailwayVar('MYSQLPASSWORD');
 
     try {
         $pdo = new PDO("mysql:host={$host};port={$port};dbname={$db};charset=utf8mb4", $user, $pass, [
@@ -60,7 +57,6 @@ function getDB() {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )");
 
-        // Tabel untuk fitur Chat Global
         $pdo->exec("CREATE TABLE IF NOT EXISTS chats (
             id INT AUTO_INCREMENT PRIMARY KEY,
             username VARCHAR(50),
