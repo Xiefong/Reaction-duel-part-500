@@ -75,7 +75,11 @@ const UI = {
 };
 
 const Network = {
-    connect: () => { if (els.serverStatus) els.serverStatus.textContent = "ONLINE"; Network.refreshLeaderboard(); },
+    connect: () => {
+        if (els.serverStatus) els.serverStatus.textContent = "ONLINE";
+        Network.refreshLeaderboard();
+        Chat.startSync(); // MENYALAKAN SINKRONISASI CHAT GLOBAL
+    },
     refreshLeaderboard: async () => {
         try {
             const res = await fetch('api.php?action=get_dashboard');
@@ -260,10 +264,56 @@ const Storage = {
     }
 };
 
-const Chat = { handleKey: (e) => { if (e.key === 'Enter') Chat.send(); }, send: () => { if (!els.chatInput) return; const msg = els.chatInput.value.trim(); if (!msg) return; const div = document.createElement('div'); div.className = 'chat-msg'; div.innerHTML = `<span class="chat-msg-meta" style="color:#00BFA5;">${AppState.user ? AppState.user.username : 'Guest'}:</span>${msg}`; if (els.chatBox) { els.chatBox.appendChild(div); els.chatBox.scrollTop = els.chatBox.scrollHeight; } els.chatInput.value = ''; } };
+const Chat = {
+    syncInterval: null,
+    handleKey: (e) => { if (e.key === 'Enter') Chat.send(); },
+    send: async () => {
+        if (!els.chatInput) return;
+        const msg = els.chatInput.value.trim();
+        if (!msg) return;
+        els.chatInput.value = ''; // Kosongkan ketikan
+        
+        try {
+            // Tembak chat ke Database
+            await fetch('api.php?action=send_chat', {
+                method: 'POST',
+                body: JSON.stringify({ username: AppState.user ? AppState.user.username : 'Guest', message: msg })
+            });
+            Chat.load(); // Refresh layar chat
+        } catch(e) {}
+    },
+    load: async () => {
+        try {
+            const res = await fetch('api.php?action=get_chats');
+            const data = await res.json();
+            if (data.success && els.chatBox) {
+                els.chatBox.innerHTML = ''; // Bersihkan sebelum diisi baru
+                data.chats.forEach(c => {
+                    const div = document.createElement('div');
+                    div.className = 'chat-msg';
+                    div.innerHTML = `<span class="chat-msg-meta" style="color:var(--teal-dark);">${c.username}:</span>${c.message}`;
+                    els.chatBox.appendChild(div);
+                });
+                els.chatBox.scrollTop = els.chatBox.scrollHeight; // Auto scroll ke bawah
+            }
+        } catch(e) {}
+    },
+    startSync: () => {
+        if (Chat.syncInterval) clearInterval(Chat.syncInterval);
+        Chat.load();
+        Chat.syncInterval = setInterval(Chat.load, 2500); // Menarik data chat baru setiap 2.5 detik
+    }
+};
 
 const Dashboard = { init: () => {} }; // Dashboard dinonaktifkan di client.js karena diurus langsung di dashboard.html
 
-(function injectMobileCSS() { const style = document.createElement('style'); style.textContent = ` @media (max-width: 768px) { .lobby-sidebar { display: none !important; } #lobby-screen { flex-direction: column !important; } .lobby-main { padding: 8px 8px 80px 8px !important; } .panels-grid { grid-template-columns: 1fr !important; gap: 10px !important; } .panel-card { min-height: unset !important; } .topbar { padding: 0 10px !important; height: 54px !important; } .topbar-center { font-size: 13px !important; letter-spacing: 2px !important; } .user-name { font-size: 12px !important; } .level-text { font-size: 10px !important; } .xp-bar-bg { width: 80px !important; } .btn-topbar { font-size: 10px !important; padding: 6px 10px !important; } .server-status-badge { display: none !important; } .login-box { padding: 28px 20px !important; margin: 0 12px !important; } .room-waiting-container { padding: 10px !important; } .slots-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; } .rw-actions { flex-direction: column !important; } .btn-rw { padding: 12px !important; } #game-ui-top { padding: 8px 12px !important; } .timer-display { font-size: 18px !important; } .btn-exit { font-size: 10px !important; padding: 8px 12px !important; } #round-indicator { font-size: 11px !important; } .trash-item { width: 70px !important; height: 70px !important; } .icon-good, .icon-bad, .icon-bonus { font-size: 2rem !important; } #stats-panel { gap: 8px !important; width: 96% !important; } .stat-box { padding: 8px 10px !important; min-width: 70px !important; } .stat-val { font-size: 0.9rem !important; } .result-box { padding: 24px 16px !important; margin: 0 12px !important; } } `; document.head.appendChild(style); })();
+(function injectMobileCSS() { const style = document.createElement('style'); style.textContent = ` @media (max-width: 768px) { .lobby-sidebar { 
+                display: flex !important; 
+                width: 100% !important; 
+                min-height: 400px !important; 
+                border-left: none !important; 
+                border-top: 2px solid var(--border) !important; 
+                margin-top: 20px; 
+            } } #lobby-screen { flex-direction: column !important; } .lobby-main { padding: 8px 8px 80px 8px !important; } .panels-grid { grid-template-columns: 1fr !important; gap: 10px !important; } .panel-card { min-height: unset !important; } .topbar { padding: 0 10px !important; height: 54px !important; } .topbar-center { font-size: 13px !important; letter-spacing: 2px !important; } .user-name { font-size: 12px !important; } .level-text { font-size: 10px !important; } .xp-bar-bg { width: 80px !important; } .btn-topbar { font-size: 10px !important; padding: 6px 10px !important; } .server-status-badge { display: none !important; } .login-box { padding: 28px 20px !important; margin: 0 12px !important; } .room-waiting-container { padding: 10px !important; } .slots-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; } .rw-actions { flex-direction: column !important; } .btn-rw { padding: 12px !important; } #game-ui-top { padding: 8px 12px !important; } .timer-display { font-size: 18px !important; } .btn-exit { font-size: 10px !important; padding: 8px 12px !important; } #round-indicator { font-size: 11px !important; } .trash-item { width: 70px !important; height: 70px !important; } .icon-good, .icon-bad, .icon-bonus { font-size: 2rem !important; } #stats-panel { gap: 8px !important; width: 96% !important; } .stat-box { padding: 8px 10px !important; min-width: 70px !important; } .stat-val { font-size: 0.9rem !important; } .result-box { padding: 24px 16px !important; margin: 0 12px !important; } } `; document.head.appendChild(style); })();
 window.onbeforeunload = function () { if (AppState.isGameActive) return "Game sedang berlangsung. Yakin ingin keluar?"; };
 document.addEventListener('DOMContentLoaded', () => { initDOM(); if (els.btnLogin) els.btnLogin.onclick = Auth.login; if (els.btnRegister) els.btnRegister.onclick = Auth.register; if (els.btnGuest) els.btnGuest.onclick = Auth.loginGuest; if (document.getElementById('sum-sessions')) Dashboard.init(); else if (document.getElementById('login-screen')) Auth.checkSession(); });
