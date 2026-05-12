@@ -3,12 +3,18 @@ function getDB() {
     static $pdo = null;
     if ($pdo !== null) return $pdo;
     
-    // INI DATA TERBARU KAMU YANG BENAR!
-    $host = "junction.proxy.rlwy.net"; 
-    $port = "58807"; 
-    $pass = "rOeyWdCqgYjMhWePzLgUjKkSbdYfWdZz"; 
-    $db   = "railway"; 
-    $user = "root";    
+    // PHP akan otomatis mengambil password dari database yang terhubung di tab Variables
+    $host = $_SERVER['MYSQLHOST'] ?? $_ENV['MYSQLHOST'] ?? getenv('MYSQLHOST');
+    $port = $_SERVER['MYSQLPORT'] ?? $_ENV['MYSQLPORT'] ?? getenv('MYSQLPORT');
+    $db   = $_SERVER['MYSQLDATABASE'] ?? $_ENV['MYSQLDATABASE'] ?? getenv('MYSQLDATABASE');
+    $user = $_SERVER['MYSQLUSER'] ?? $_ENV['MYSQLUSER'] ?? getenv('MYSQLUSER');
+    $pass = $_SERVER['MYSQLPASSWORD'] ?? $_ENV['MYSQLPASSWORD'] ?? getenv('MYSQLPASSWORD');
+
+    // Mencegah PHP jalan kalau variabelnya kosong
+    if (!$host || !$pass) {
+        echo json_encode(["success" => false, "message" => "Variabel Database kosong! Pastikan sudah Add Reference di Railway."]);
+        exit;
+    }
 
     try {
         $pdo = new PDO("mysql:host={$host};port={$port};dbname={$db};charset=utf8mb4", $user, $pass, [
@@ -17,7 +23,7 @@ function getDB() {
             PDO::ATTR_EMULATE_PREPARES => false,
         ]);
 
-        // Otomatis membuat semua tabel yang dibutuhkan
+        // Otomatis bikin tabel
         $pdo->exec("CREATE TABLE IF NOT EXISTS users (
             username VARCHAR(50) PRIMARY KEY,
             password VARCHAR(100),
