@@ -295,13 +295,45 @@
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
 
-        @media (max-width: 900px) {
-            .lobby-content { grid-template-columns: 1fr; }
-            .lobby-left, .lobby-right { display: none; }
-            .bottom-bar { flex-direction: column; padding: 10px 15px; }
-            .btn-dashboard, .btn-find-match { width: 100%; }
-            .lobby-sidebar { display: none; }
-            .panels-grid { grid-template-columns: 1fr; }
+       @media (max-width: 900px) {
+            #lobby-screen {
+                flex-direction: column;
+                overflow-y: auto;
+            }
+            .lobby-main {
+                flex: none; /* Biarkan panel menyesuaikan tinggi secara natural */
+                height: auto;
+                padding: 15px;
+                padding-bottom: 20px;
+                overflow: visible;
+            }
+            .panels-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            .lobby-sidebar {
+                width: 100%;
+                flex: none;
+                height: 450px; /* Tinggi fix untuk chat di HP agar rapi di bawah */
+                border-left: none;
+                border-top: 3px solid var(--border);
+            }
+            .topbar-center, .server-status-badge { 
+                display: none; /* Hilangkan tulisan tengah di HP agar tidak sempit */
+            }
+            .user-profile { gap: 8px; }
+            .user-avatar { width: 34px; height: 34px; font-size: 0.9rem; }
+            .user-name { font-size: 12px; }
+            .level-text { font-size: 10px; }
+            .xp-bar-bg { width: 70px; }
+            .btn-topbar { padding: 8px 10px; font-size: 10px; }
+            
+            /* Penyesuaian Modal & Box saat main */
+            .login-box { margin: 0 15px; padding: 30px 20px; }
+            .room-waiting-container { padding: 10px; }
+            .slots-grid { grid-template-columns: 1fr; gap: 8px; }
+            .rw-actions { flex-direction: column; }
+            .btn-rw { width: 100%; }
         }
     </style>
 </head>
