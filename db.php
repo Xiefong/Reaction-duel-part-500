@@ -3,26 +3,32 @@ function getDB() {
     static $pdo = null;
     if ($pdo !== null) return $pdo;
     
-    $host = getenv('MYSQLHOST');
-    $port = getenv('MYSQLPORT'); 
-    $db   = getenv('MYSQLDATABASE');
-    $user = getenv('MYSQLUSER');
-    $pass = getenv('MYSQLPASSWORD');
+    // SAPU JAGAT: Cek semua kemungkinan penulisan nama variabel dari Railway
+    $host = getenv('MYSQLHOST') ?: getenv('MYSQL_HOST');
+    $port = getenv('MYSQLPORT') ?: getenv('MYSQL_PORT') ?: '3306'; 
+    $db   = getenv('MYSQL_DATABASE') ?: getenv('MYSQLDATABASE') ?: 'railway';
+    $user = getenv('MYSQLUSER') ?: getenv('MYSQL_USER') ?: 'root';
+    $pass = getenv('MYSQLPASSWORD') ?: getenv('MYSQL_ROOT_PASSWORD');
 
-    // Jaga-jaga jika Railway lambat mengirim nama database, kita paksa isi dengan 'railway'
-    if (empty($db)) {
-        $db = 'railway';
+    // Jika user menambahkan MYSQL_URL, kita prioritaskan ini karena 100% akurat
+    $url = getenv('MYSQL_URL') ?: getenv('DATABASE_URL');
+    if ($url) {
+        $parsed = parse_url($url);
+        $host = $parsed['host'] ?? $host;
+        $port = $parsed['port'] ?? $port;
+        $db   = ltrim($parsed['path'], '/') ?: $db;
+        $user = $parsed['user'] ?? $user;
+        $pass = $parsed['pass'] ?? $pass;
     }
 
     try {
-        // PERBAIKAN: Kita langsung kunci nama database-nya (dbname) di sini!
         $pdo = new PDO("mysql:host={$host};port={$port};dbname={$db};charset=utf8mb4", $user, $pass, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES => false,
         ]);
 
-        // Karena sudah masuk ke database yang tepat, kita tinggal buat tabelnya
+        // Buat tabel otomatis
         $pdo->exec("CREATE TABLE IF NOT EXISTS users (
             username VARCHAR(50) PRIMARY KEY,
             password VARCHAR(100),
@@ -51,6 +57,14 @@ function getDB() {
             p1_ready INT DEFAULT 0,
             p2_ready INT DEFAULT 0,
             status VARCHAR(20) DEFAULT 'waiting',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )");
+
+        // Tabel untuk fitur Chat Global
+        $pdo->exec("CREATE TABLE IF NOT EXISTS chats (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(50),
+            message TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )");
 
