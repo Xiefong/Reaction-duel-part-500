@@ -1,22 +1,14 @@
 <?php
-// Fungsi pembantu agar PHP memaksa mengambil variabel dari Railway
-function getRailwayVar($key) {
-    if (getenv($key)) return getenv($key);
-    if (isset($_SERVER[$key])) return $_SERVER[$key];
-    if (isset($_ENV[$key])) return $_ENV[$key];
-    return '';
-}
-
 function getDB() {
     static $pdo = null;
     if ($pdo !== null) return $pdo;
     
-    // Ambil data langsung sesuai nama variabel di foto Railway kamu
-    $host = getRailwayVar('MYSQLHOST');
-    $port = getRailwayVar('MYSQLPORT'); 
-    $db   = getRailwayVar('MYSQLDATABASE');
-    $user = getRailwayVar('MYSQLUSER');
-    $pass = getRailwayVar('MYSQLPASSWORD');
+    // DATA DARI RAILWAY KAMU (Sudah saya masukkan langsung)
+    $host = "mainline.proxy.rlwy.net"; 
+    $port = "46463"; 
+    $pass = "NCYdsxbJvSbepwCdcUnwUYkHnmdRcQmV"; 
+    $db   = "railway"; 
+    $user = "root";    
 
     try {
         $pdo = new PDO("mysql:host={$host};port={$port};dbname={$db};charset=utf8mb4", $user, $pass, [
@@ -25,7 +17,7 @@ function getDB() {
             PDO::ATTR_EMULATE_PREPARES => false,
         ]);
 
-        // Buat tabel otomatis
+        // Otomatis membuat semua tabel yang dibutuhkan
         $pdo->exec("CREATE TABLE IF NOT EXISTS users (
             username VARCHAR(50) PRIMARY KEY,
             password VARCHAR(100),
@@ -67,7 +59,7 @@ function getDB() {
         return $pdo;
 
     } catch (\PDOException $e) {
-        echo json_encode(["success" => false, "message" => "DB Error: " . $e->getMessage()]);
+        echo json_encode(["success" => false, "message" => "Koneksi Gagal: " . $e->getMessage()]);
         exit;
     }
 }
