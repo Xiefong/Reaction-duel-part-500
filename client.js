@@ -448,5 +448,6 @@ const Chat = {
 
 const Dashboard = { init: () => {} };
 
+
 window.onbeforeunload = function () { if (AppState.isGameActive) return "Game sedang berlangsung. Yakin ingin keluar?"; };
 document.addEventListener('DOMContentLoaded', () => { initDOM(); if (els.btnLogin) els.btnLogin.onclick = Auth.login; if (els.btnRegister) els.btnRegister.onclick = Auth.register; if (els.btnGuest) els.btnGuest.onclick = Auth.loginGuest; if (document.getElementById('sum-sessions')) Dashboard.init(); else if (document.getElementById('login-screen')) Auth.checkSession(); });
